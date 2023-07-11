@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"light"}';
+$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"dark","ide":"vsc"}';
 
 /**
  * H3K | Tiny File Manager V2.5.3
@@ -155,7 +155,10 @@ $external = array(
     'css-dropzone' => '<link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" rel="stylesheet">',
     'css-font-awesome' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">',
     'css-highlightjs' => '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/' . $highlightjs_style . '.min.css">',
-    'js-ace' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.13.1/ace.js"></script>',
+    'css-ide-vsc' => '<link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.40.0/min/vs/editor/editor.main.min.css" />',
+    'js-ide-ace' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.13.1/ace.js"></script>',
+    'js-ide-vsc' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.40.0/min/vs/loader.min.js"></script>',
+    'js-req-ide-vsc' => '<script> require.config({ paths: { "vs": "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.40.0/min/vs" }}); </script>',    
     'js-bootstrap' => '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>',
     'js-dropzone' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>',
     'js-jquery' => '<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>',
@@ -197,6 +200,11 @@ $hide_Cols = isset($cfg->data['hide_Cols']) ? $cfg->data['hide_Cols'] : true;
 $theme = isset($cfg->data['theme']) ? $cfg->data['theme'] : 'light';
 
 define('FM_THEME', $theme);
+
+// IDE
+$ide = isset($cfg->data['ide']) ? $cfg->data['ide'] : 'ace';
+
+define('FM_IDE', $ide);
 
 //available languages
 $lang_list = array(
@@ -529,7 +537,7 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
 
     // Save Config
     if (isset($_POST['type']) && $_POST['type'] == "settings") {
-        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $theme;
+        global $cfg, $lang, $report_errors, $show_hidden_files, $lang_list, $hide_Cols, $theme, $ide;
         $newLng = $_POST['js-language'];
         fm_get_translations([]);
         if (!array_key_exists($newLng, $lang_list)) {
@@ -540,6 +548,7 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
         $shf = isset($_POST['js-show-hidden']) && $_POST['js-show-hidden'] == "true" ? true : false;
         $hco = isset($_POST['js-hide-cols']) && $_POST['js-hide-cols'] == "true" ? true : false;
         $te3 = $_POST['js-theme-3'];
+        $teide = $_POST['js-ide-3'];
 
         if ($cfg->data['lang'] != $newLng) {
             $cfg->data['lang'] = $newLng;
@@ -565,6 +574,10 @@ if ((isset($_SESSION[FM_SESSION_ID]['logged'], $auth_users[$_SESSION[FM_SESSION_
             $cfg->data['theme'] = $te3;
             $theme = $te3;
         }
+        if ($cfg->data['ide'] != $teide) {
+            $cfg->data['ide'] = $teide;
+            $ide = $teide;
+        }        
         $cfg->save();
         echo true;
     }
@@ -1573,6 +1586,16 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                     </div>
 
                     <div class="mb-3 row">
+                        <label for="js-3-1" class="col-sm-3 col-form-label"><?php echo lng('IDE') ?></label>
+                        <div class="col-sm-5">
+                            <select class="form-select w-100" id="js-3-0" name="js-ide-3">
+                                <option value='ace' <?php if($ide == "ace"){echo "selected";} ?>><?php echo lng('ACE') ?></option>
+                                <option value='vsc' <?php if($ide == "vsc"){echo "selected";} ?>><?php echo lng('VSC') ?></option>
+                            </select>
+                        </div>
+                    </div>                    
+
+                    <div class="mb-3 row">
                         <div class="col-sm-10">
                             <button type="submit" class="btn btn-success"> <i class="fa fa-check-circle"></i> <?php echo lng('Save'); ?></button>
                         </div>
@@ -1771,7 +1794,7 @@ if (isset($_GET['view'])) {
                     ?>
                     <b class="ms-2"><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>" class="edit-file"><i class="fa fa-pencil-square"></i> <?php echo lng('Edit') ?>
                         </a></b> &nbsp;
-                    <b class="ms-2"><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ace"
+                    <b class="ms-2"><a href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&env=ide"
                             class="edit-file"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?>
                         </a></b> &nbsp;
                 <?php } ?>
@@ -1861,7 +1884,7 @@ if (isset($_GET['edit']) && !FM_READONLY) {
     // normal editer
     $isNormalEditor = true;
     if (isset($_GET['env'])) {
-        if ($_GET['env'] == "ace") {
+        if ($_GET['env'] == "ide") {
             $isNormalEditor = false;
         }
     }
@@ -1888,6 +1911,35 @@ if (isset($_GET['edit']) && !FM_READONLY) {
 
     ?>
     <div class="path">
+        <?php switch(FM_IDE) {
+                case('vsc'): ?>
+        <div class="row">
+            <div class="col-xs-12 col-sm-5 col-lg-6 pt-1">
+                <div class="btn-toolbar" role="toolbar">
+                    <?php if (!$isNormalEditor) { ?>
+                        <div class="btn-group js-ide-toolbar">
+                            <button class="btn btn-sm btn-outline-secondary mx-1" id="js-ide-search" title="<?php echo lng('Search') ?>"><i class="fa fa-search" title="<?php echo lng('Search') ?>"></i></button>
+                        </div>
+                    <?php } ?>                    
+                    <a title="<?php echo lng('Back') ?>" class="btn btn-sm btn-outline-primary mx-1" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;view=<?php echo urlencode($file) ?>"><i class="fa fa-reply-all"></i> <?php echo lng('Back') ?></a>
+                    <a title="<?php echo lng('BackUp') ?>" class="btn btn-sm btn-outline-primary mx-1" href="javascript:void(0);" onclick="backup('<?php echo urlencode(trim(FM_PATH)) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-database"></i> <?php echo lng('BackUp') ?></a>                    
+                    <?php if ($is_text) { ?>
+                    <?php if ($isNormalEditor) { ?>
+                        <a title="Advanced" class="btn btn-sm btn-outline-primary mx-1" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ide"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?></a>
+                        <button type="button" class="btn btn-sm btn-success" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> Save
+                        </button>
+                    <?php } else { ?>
+                        <a title="Plain Editor" class="btn btn-sm btn-outline-primary mx-1" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> <?php echo lng('NormalEditor') ?></a>
+                        <button type="button" class="btn btn-sm btn-success mx-1" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'ide')"><i class="fa fa-floppy-o"></i> <?php echo lng('Save') ?>
+                        </button>
+                    <?php } ?>
+                <?php } ?>
+                </div>
+            </div>
+            <div class="edit-file-actions col-xs-12 col-sm-7 col-lg-6 text-end pt-1"></div>
+        </div>                
+        <?php       break; ?>
+        <?php   default: ?>   
         <div class="row">
             <div class="col-xs-12 col-sm-5 col-lg-6 pt-1">
                 <div class="btn-toolbar" role="toolbar">
@@ -1910,23 +1962,31 @@ if (isset($_GET['edit']) && !FM_READONLY) {
                 <a title="<?php echo lng('BackUp') ?>" class="btn btn-sm btn-outline-primary" href="javascript:void(0);" onclick="backup('<?php echo urlencode(trim(FM_PATH)) ?>','<?php echo urlencode($file) ?>')"><i class="fa fa-database"></i> <?php echo lng('BackUp') ?></a>
                 <?php if ($is_text) { ?>
                     <?php if ($isNormalEditor) { ?>
-                        <a title="Advanced" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ace"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?></a>
+                        <a title="Advanced" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>&amp;env=ide"><i class="fa fa-pencil-square-o"></i> <?php echo lng('AdvancedEditor') ?></a>
                         <button type="button" class="btn btn-sm btn-success" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'nrl')"><i class="fa fa-floppy-o"></i> Save
                         </button>
                     <?php } else { ?>
                         <a title="Plain Editor" class="btn btn-sm btn-outline-primary" href="?p=<?php echo urlencode(trim(FM_PATH)) ?>&amp;edit=<?php echo urlencode($file) ?>"><i class="fa fa-text-height"></i> <?php echo lng('NormalEditor') ?></a>
-                        <button type="button" class="btn btn-sm btn-success" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'ace')"><i class="fa fa-floppy-o"></i> <?php echo lng('Save') ?>
+                        <button type="button" class="btn btn-sm btn-success" name="Save" data-url="<?php echo fm_enc($file_url) ?>" onclick="edit_save(this,'ide')"><i class="fa fa-floppy-o"></i> <?php echo lng('Save') ?>
                         </button>
                     <?php } ?>
                 <?php } ?>
             </div>
         </div>
+        <?php   } ?>
         <?php
         if ($is_text && $isNormalEditor) {
             echo '<textarea class="mt-2" id="normal-editor" rows="33" cols="120" style="width: 99.5%;">' . htmlspecialchars($content) . '</textarea>';
             echo '<script>document.addEventListener("keydown", function(e) {if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)  && e.keyCode == 83) { e.preventDefault();edit_save(this,"nrl");}}, false);</script>';
         } elseif ($is_text) {
+            switch(FM_IDE) {
+                case('vsc'):
+            echo '<div id="editor" contenteditable="true"></div>';
+            echo '<div id="editorData" style="display: none;">' . htmlspecialchars($content) . '</div>';
+                    break;
+                default:    
             echo '<div id="editor" contenteditable="true">' . htmlspecialchars($content) . '</div>';
+            }
         } else {
             fm_set_msg(lng('FILE EXTENSION HAS NOT SUPPORTED'), 'error');
         }
@@ -3730,6 +3790,11 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <?php if (FM_USE_HIGHLIGHTJS && isset($_GET['view'])): ?>
     <?php print_external('css-highlightjs'); ?>
     <?php endif; ?>
+    <?php 
+        if(FM_IDE == "ide") {
+            print_external('css-ide-vsc');
+        } 
+    ?>
     <script type="text/javascript">window.csrf = '<?php echo $_SESSION['token']; ?>';</script>
     <style>
         html { -moz-osx-font-smoothing: grayscale; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; height: 100%; scroll-behavior: smooth;}
@@ -4020,7 +4085,13 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     function toast(txt) { var x = document.getElementById("snackbar");x.innerHTML=txt;x.className = "show";setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000); }
     // Save file
     function edit_save(e, t) {
-        var n = "ace" == t ? editor.getSession().getValue() : document.getElementById("normal-editor").value;
+        <?php switch(FM_IDE) {
+                case('vsc'): ?>     
+            var n = "ide" == t ? window.editor.getValue() : document.getElementById("normal-editor").value;
+        <?php       break;
+                default: ?>
+            var n = "ide" == t ? editor.getSession().getValue() : document.getElementById("normal-editor").value;
+        <?php } ?>
         if (typeof n !== 'undefined' && n !== null) {
             if (true) {
                 var data = {ajax: true, content: n, type: 'save', token: window.csrf};
@@ -4162,7 +4233,29 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
         $ext = pathinfo($_GET["edit"], PATHINFO_EXTENSION);
         $ext =  $ext == "js" ? "javascript" :  $ext;
         ?>
-    <?php print_external('js-ace'); ?>
+    <?php switch(FM_IDE) {
+            case('vsc'): 
+                print_external('js-ide-vsc');
+                print_external('js-req-ide-vsc'); ?>
+    <script>
+        $(function () {
+            require(["vs/editor/editor.main"], () => {
+                window.editor = monaco.editor.create(document.getElementById('editor'), {
+                    value: document.getElementById('editorData').textContent,
+                    language: '<?php ideLng($ext); ?>',
+                    theme: '<?php ideTheme(); ?>'
+                });
+            });            
+            const searchButton = document.getElementById('js-ide-search');
+            searchButton.addEventListener('click', function() {
+                const action = editor.getAction('actions.find');
+                editor.trigger('', action.id, null);
+            });
+        });
+    </script>
+    <?php       break;
+            default:    
+                print_external('js-ide-ace'); ?>
     <script>
         var editor = ace.edit("editor");
         editor.getSession().setMode( {path:"ace/mode/<?php echo $ext; ?>", inline:true} );
@@ -4214,11 +4307,42 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
             });
         });
     </script>
+    <?php } ?>
 <?php endif; ?>
 <div id="snackbar"></div>
 </body>
 </html>
 <?php
+}
+
+/**
+ * IDE Language
+ * @param string $extFile
+ * @return string
+ */
+function ideLng($extFile) {
+    $ideLngArr["html"]      =  "html";
+    $ideLngArr["css"]       =  "css";
+    $ideLngArr["js"]        =  "javascript";
+    $ideLngArr["md"]        =  "markdown";
+    $ideLngArr["json"]      =  "json";
+    $ideLngArr["php"]       =  "php";
+    if (isset( $ideLngArr[$extFile])) 
+        echo $ideLngArr[$extFile];
+    else    
+        echo 'text';
+}
+
+/**
+ * IDE Theme
+ * @param string fm_theme
+ * @return string
+ */
+function ideTheme() {
+    if(FM_THEME == "dark")
+        echo 'vs-dark';
+    else
+        echo 'vs-light';
 }
 
 /**
