@@ -1,6 +1,6 @@
 <?php
 //Default Configuration
-$CONFIG = '{"lang":"en","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"dark","ide":"vsc"}';
+$CONFIG = '{"lang":"cz","error_reporting":false,"show_hidden":false,"hide_Cols":false,"theme":"dark","ide":"vsc"}';
 
 /**
  * H3K | Tiny File Manager V2.5.3
@@ -1586,11 +1586,11 @@ if (isset($_GET['settings']) && !FM_READONLY) {
                     </div>
 
                     <div class="mb-3 row">
-                        <label for="js-3-1" class="col-sm-3 col-form-label"><?php echo lng('IDE') ?></label>
+                        <label for="js-3-1" class="col-sm-3 col-form-label"><?php echo lng('AdvancedEditor') ?></label>
                         <div class="col-sm-5">
                             <select class="form-select w-100" id="js-3-0" name="js-ide-3">
-                                <option value='ace' <?php if($ide == "ace"){echo "selected";} ?>><?php echo lng('ACE') ?></option>
-                                <option value='vsc' <?php if($ide == "vsc"){echo "selected";} ?>><?php echo lng('VSC') ?></option>
+                                <option value='ace' <?php if($ide == "ace"){echo "selected";} ?>><?php echo lng('Default') ?></option>
+                                <option value='vsc' <?php if($ide == "vsc"){echo "selected";} ?>><?php echo lng('Monaco editor') ?></option>
                             </select>
                         </div>
                     </div>                    
@@ -3791,8 +3791,11 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
     <?php print_external('css-highlightjs'); ?>
     <?php endif; ?>
     <?php 
-        if(FM_IDE == "ide") {
-            print_external('css-ide-vsc');
+        switch(FM_IDE) {
+            case("vsc"):
+                print_external('css-ide-vsc');
+                break;
+            default:
         } 
     ?>
     <script type="text/javascript">window.csrf = '<?php echo $_SESSION['token']; ?>';</script>
@@ -4316,26 +4319,21 @@ $isStickyNavBar = $sticky_navbar ? 'navbar-fixed' : 'navbar-normal';
 }
 
 /**
- * IDE Language
+ * IDE VSC Language
  * @param string $extFile
  * @return string
  */
 function ideLng($extFile) {
-    $ideLngArr["html"]      =  "html";
-    $ideLngArr["css"]       =  "css";
     $ideLngArr["js"]        =  "javascript";
     $ideLngArr["md"]        =  "markdown";
-    $ideLngArr["json"]      =  "json";
-    $ideLngArr["php"]       =  "php";
     if (isset( $ideLngArr[$extFile])) 
         echo $ideLngArr[$extFile];
     else    
-        echo 'text';
+        echo $extFile;
 }
 
 /**
- * IDE Theme
- * @param string fm_theme
+ * IDE VSC Theme
  * @return string
  */
 function ideTheme() {
